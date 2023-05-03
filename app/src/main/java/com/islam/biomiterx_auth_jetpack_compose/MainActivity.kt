@@ -4,6 +4,8 @@ import android.Manifest
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_STRONG
+import android.hardware.biometrics.BiometricManager.Authenticators.DEVICE_CREDENTIAL
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
 import android.os.Bundle
@@ -22,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import com.islam.biomiterx_auth_jetpack_compose.ui.theme.BiomiterxauthjetpackcomposeTheme
 
+
 class MainActivity : ComponentActivity() {
     private var cancellationSignal: CancellationSignal? = null
 
@@ -34,7 +37,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
 
     private val authenticationCallBack: BiometricPrompt.AuthenticationCallback
         get() = @RequiresApi(Build.VERSION_CODES.P) object :
@@ -87,11 +89,8 @@ class MainActivity : ComponentActivity() {
                 .setTitle("Allow Biometric Authentication")
                 .setSubtitle("You will no longer required username and password during login")
                 .setDescription("we use biometric authentication to protect your data")
-                .setNegativeButton("NOT NOW!", this.mainExecutor) { dialogInterface, i ->
-                    Toast.makeText(applicationContext, "auth_cancel", Toast.LENGTH_SHORT).show()
-                    notifyUser("authentication cancel")
-                }.build()
-
+                .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
+                .build()
             biometricPrompt.authenticate(
                 getCancellationSignal(), mainExecutor, authenticationCallBack
             )
