@@ -1,8 +1,10 @@
 package com.islam.biomiterx_auth_jetpack_compose
 
 import android.Manifest
+import android.app.Activity
 import android.app.KeyguardManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import android.hardware.biometrics.BiometricManager.Authenticators.DEVICE_CREDENTIAL
@@ -10,6 +12,7 @@ import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
 import android.os.Bundle
 import android.os.CancellationSignal
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -20,6 +23,7 @@ import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import com.islam.biomiterx_auth_jetpack_compose.ui.theme.BiomiterxauthjetpackcomposeTheme
@@ -32,6 +36,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val context = LocalContext.current
             BiomiterxauthjetpackcomposeTheme {
                 BiometricScreen(onButtonClicked = { lunchBiometric() })
             }
@@ -41,6 +46,7 @@ class MainActivity : ComponentActivity() {
     private val authenticationCallBack: BiometricPrompt.AuthenticationCallback
         get() = @RequiresApi(Build.VERSION_CODES.P) object :
             BiometricPrompt.AuthenticationCallback() {
+            @RequiresApi(Build.VERSION_CODES.R)
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
                 notifyUser("Authentication Error $errorCode")
                 Toast.makeText(applicationContext, "Auth Error", Toast.LENGTH_SHORT).show()
@@ -56,6 +62,7 @@ class MainActivity : ComponentActivity() {
                 super.onAuthenticationFailed()
             }
 
+            @RequiresApi(Build.VERSION_CODES.R)
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
                 notifyUser(" authentication Succeeded")
                 Toast.makeText(applicationContext, "Auth Succeeded", Toast.LENGTH_SHORT).show()
@@ -63,11 +70,17 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+
     @RequiresApi(Build.VERSION_CODES.R)
     private fun checkedBiometricSupport(): Boolean {
         val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
 
         if (!keyguardManager.isDeviceSecure) {
+            Toast.makeText(
+                applicationContext,
+                "lock screen security not enable in setting",
+                Toast.LENGTH_SHORT
+            ).show()
             notifyUser("lock screen security not enable in setting")
             return false
         }
@@ -75,7 +88,9 @@ class MainActivity : ComponentActivity() {
                 this, Manifest.permission.USE_BIOMETRIC
             ) != PackageManager.PERMISSION_GRANTED
         ) {
+
             notifyUser("Finger print authentication permission not enable")
+
             return false
         }
         return packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
@@ -97,6 +112,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.R)
     private fun getCancellationSignal(): CancellationSignal {
         cancellationSignal = CancellationSignal()
         cancellationSignal?.setOnCancelListener {
@@ -105,7 +121,15 @@ class MainActivity : ComponentActivity() {
         return cancellationSignal as CancellationSignal
     }
 
+    @RequiresApi(Build.VERSION_CODES.R)
     private fun notifyUser(message: String) {
+        val intent = Intent(Settings.ACTION_BIOMETRIC_ENROLL).apply {
+            putExtra(
+                Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED,
+                BIOMETRIC_STRONG or DEVICE_CREDENTIAL
+            )
+        }
+        startActivity(intent)
         Log.d("BIOMETRIC", message)
     }
 
