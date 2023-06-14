@@ -1,7 +1,6 @@
 package com.islam.biomiterx_auth_jetpack_compose
 
 import android.Manifest
-import android.app.Activity
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
@@ -23,20 +22,19 @@ import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import com.islam.biomiterx_auth_jetpack_compose.ui.theme.BiomiterxauthjetpackcomposeTheme
 
 
 class MainActivity : ComponentActivity() {
+
     private var cancellationSignal: CancellationSignal? = null
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val context = LocalContext.current
             BiomiterxauthjetpackcomposeTheme {
                 BiometricScreen(onButtonClicked = { lunchBiometric() })
             }
@@ -71,6 +69,7 @@ class MainActivity : ComponentActivity() {
         }
 
 
+
     @RequiresApi(Build.VERSION_CODES.R)
     private fun checkedBiometricSupport(): Boolean {
         val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
@@ -99,15 +98,21 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.R)
     private fun lunchBiometric() {
         if (checkedBiometricSupport()) {
+
             val biometricPrompt = BiometricPrompt
                 .Builder(this)
                 .setTitle("Allow Biometric Authentication")
                 .setSubtitle("You will no longer required username and password during login")
                 .setDescription("we use biometric authentication to protect your data")
-                .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
+                .setNegativeButton("Cancel", this.mainExecutor) { _, _ ->
+                    notifyUser("Cancel")
+                }
                 .build()
+
             biometricPrompt.authenticate(
-                getCancellationSignal(), mainExecutor, authenticationCallBack
+                getCancellationSignal(),
+                mainExecutor,
+                authenticationCallBack
             )
         }
     }
